@@ -1,0 +1,84 @@
+<%include templates/header.ejs%>
+<div class="container">
+    <div class="row">
+        <h1 style="text-align: center;padding-bottom: 30px; font-size:x-large">Create New Facility</h1>
+        <div class="col-md-6" style="padding-right:80px">
+            <form action="/facilities" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input id="name" class="form-control" type="text" name="facility[name]" placeholder="name">
+                </div>
+                <div class="form-group">
+                    <label for="image">Image:</label>
+                    <input type="file" id="image" name="image" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label for="price">Price:</label>
+                    <input id="price"class="form-control" type="number" name="facility[price]" placeholder="price in JD per hour" min="0.1" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <input id="description" class="form-control" type="text" name="facility[description]" placeholder="description">
+                </div>
+                <div class="form-group">
+                    <label for="loc-input">Location:</label>
+                    <input id="loc-input" class="form-control" type="text" name="facility[location]" placeholder="Eg: Orthodox Club Amman">
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-lg btn-primary btn-block">submit</button>
+                </div>
+            </form>
+
+
+            <a href="/facilities">back</a>
+        </div>
+        <div class="col-md-6">
+
+            <div id="map" style="height: 500px; width:80%; border:1px solid black;"></div>
+            <button class="btn btn-lg btn-primary" style="width: 80%; margin-top: 10px" onclick="mapview()">View on map</button>
+
+        </div>
+    </div>
+</div>
+<script>
+    L.mapbox.accessToken = "<%= process.env.MAPBOX_ACCESS_TOKEN %>";
+    var results=[];
+    var map = L.mapbox.map('map','mapbox.streets', {
+        attributionControl: false,
+        minZoom: 1,
+        maxZoom: 18
+    }).setView([31.947977,35.896587],17);
+    L.marker([31.947977,35.896587], {
+        icon: L.mapbox.marker.icon({
+            'marker-size': 'large',
+            'marker-color': '#a90f0f'
+        })
+    }).addTo(map);
+    function mapview() {
+        var inputString= $("#loc-input").val();
+        console.log(inputString);
+        var myRequest = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + inputString + ".json?access_token=" + L.mapbox.accessToken ;
+        console.log(myRequest);
+        $.get(myRequest, function(data){
+            if(data) {
+                console.log(data);
+                results[0]=data.features[0].center[1];
+                results[1]=data.features[0].center[0];
+                map.setView(results);
+                L.marker(results, {
+                    icon: L.mapbox.marker.icon({
+                        'marker-size': 'large',
+                        'marker-color': '#a90f0f'
+                    })
+                }).addTo(map);
+            }
+            else{
+                alert("location not found");
+            }
+
+        });
+
+    }
+</script>
+<% include templates/footer.ejs%>

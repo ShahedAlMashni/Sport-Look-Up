@@ -1,0 +1,110 @@
+<% include templates/header.ejs%>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <p style = "font-size: large;"><strong> Location:</strong> </p>
+
+
+            <div id='map' style='width: 100%; height: 500px;'></div>
+            <div style="padding-top: 20px; font-size: large; word-break: break-all;">
+                <p > <%= facility.location %> </p>
+            </div>
+
+
+        </div>
+        <div class="col-md-8">
+            <div class="thumbnail">
+                <img class="img-responsive"  src="<%=facility.image%>">
+                <div class="caption-full">
+                    <h4 class="pull-right">JD <%=facility.price%> / night</h4>
+                    <h4><a><%= facility.name%></a></h4>
+                    <p><%= facility.description%></p>
+                    <p>
+                        <em>Submitted by: <%= facility.author.username %>, <%= moment(facility.createdAt).fromNow() %></em>
+                    </p>
+                    <% if(currentUser && facility.author.id.equals(currentUser._id)){%>
+                    <a class="btn btn-warning" href="/facilities/<%=facility._id%>/edit">Edit</a>
+                    <form class="deleteForm" action="/facilities/<%=facility._id%>?_method=DELETE" method="post" >
+                        <button class="btn btn-danger">Delete</button>
+                    </form>
+                    <%}%>
+                </div>
+            </div>
+            <div class="well">
+                <div class="text-right">
+                    <!-- <a class="btn btn-success" href="/campgrounds/<%=facility._id%>/comments/new">add new comment</a> -->
+                    <button onclick="showtext()" id="add-new-comment">add new comment</button>
+                </div>
+                <hr>
+                <div  id="new-comment" style="display: none; margin-right: 30px;margin-left: 30px">
+                    <form id="commentform" action="/facilities/<%= campground._id%>/comments" method="post">
+                        <textarea  name="comment[text]"  placeholder="Add comment.." style=" width: 100%; border: 1px solid #888; " rows="3" cols="40" name="comment" ></textarea>
+                    </form>
+                    <button class="btn btn-xs btn-primary" style="display: inline" form="commentform">Add comment</button>
+                    <button  class="btn btn-secondary btn-xs" style="display: inline" id="cancel" onclick="remove()">cancel</button>
+                </div>
+                <% facility.comments.forEach(function (comment) { %>
+                <div class="row">
+                    <div class="col-md-12">
+                        <strong><%= comment.author.username %></strong>
+                        <span class="pull-right"><%= moment(comment.createdAt).fromNow() %></span>
+                        <p>
+                            <%= comment.text %>
+                        </p>
+                        <% if(currentUser && comment.author.id.equals(currentUser._id)){%>
+                        <a class="btn btn-xs btn-warning" href="/facilities/<%=campground._id%>/comments/<%=comment._id%>/edit">Edit</a>
+                        <form class="deleteForm" action="/facilities/<%=campground._id%>/comments/<%=comment._id%>?_method=DELETE" method="post">
+                            <input type="submit" class="btn btn-xs btn-danger" value="Delete">
+                        </form>
+                        <%}%>
+                    </div>
+                </div>
+                <% })%>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+<script>
+    L.mapbox.accessToken = "<%= process.env.MAPBOX_ACCESS_TOKEN %>";
+    var myRequest = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + "<%=campground.location%>" + ".json?access_token=" + L.mapbox.accessToken ;
+    var results=[];
+    $.get(myRequest, function(data){
+        if(data) {
+            console.log(data);
+            results[0]=data.features[0].center[1];
+            results[1]=data.features[0].center[0];
+            var map = L.mapbox.map('map','mapbox.streets', {
+                attributionControl: false,
+                minZoom: 1,
+                maxZoom: 18
+            }).setView(results,17);
+            L.marker(results, {
+                icon: L.mapbox.marker.icon({
+                    'marker-size': 'large',
+                    'marker-color': '#a90f0f'
+                })
+            }).addTo(map);
+        }
+        else{
+            alert("location not found");
+        }
+
+    });
+    function showtext() {
+        var x = document.getElementById("new-comment");
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    }
+    function remove() {
+        var x = document.getElementById("new-comment");
+        x.style.display = "none";
+    }
+
+
+</script>
+<%include templates/footer.ejs%>
